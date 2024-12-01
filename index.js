@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
  * /paystack/transaction/initialize:
  *   post:
  *     summary: Initialize a Paystack payment transaction
- *     description: This endpoint initializes a payment transaction with Paystack. It returns a payment reference to complete the payment.
+ *     description: This endpoint initializes a payment transaction with Paystack. It returns an access_code to complete the payment.
  *     consumes:
  *       - application/json
  *     parameters:
@@ -71,9 +71,9 @@ app.get('/', (req, res) => {
  *         schema:
  *           type: object
  *           properties:
- *             reference:
+ *             access_code:
  *               type: string
- *               example: "ABCD1234567890"
+ *               example: "access_abc123"
  *       500:
  *         description: Payment initialization failed
  *         schema:
@@ -97,9 +97,10 @@ app.post('/paystack/transaction/initialize', async (req, res) => {
 
   try {
     const response = await axios.post('https://api.paystack.co/transaction/initialize', data, { headers });
-    const { reference } = response.data.data;
-    res.json({ reference });
+    const { access_code } = response.data.data; // Get access_code from Paystack API response
+    res.json({ access_code });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
