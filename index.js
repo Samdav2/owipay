@@ -1,79 +1,25 @@
 const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-
+const cors = require('cors');
 const app = express();
-const PAYSTACK_SECRET_KEY = 'sk_live_9c93d96ca28e52ab128970dfd783766a58d42461'; // Replace with your Paystack Secret Key
 
-// Use bodyParser to parse incoming JSON
+// Use CORS middleware to allow cross-origin requests
+app.use(cors({
+  origin: '*', // Replace '*' with your frontend domain for restricted access
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(bodyParser.json());
 
-// Swagger definition
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Paystack Integration API',
-      version: '1.0.0',
-      description: 'API for integrating Paystack payment gateway to generate tickets.',
-    },
-    servers: [
-      {
-        url: 'http://localhost:5000', // Local server URL for development
-      },
-    ],
-  },
-  apis: ['./index.js'], // Path to the API docs
-};
+const PAYSTACK_SECRET_KEY = 'sk_live_9c93d96ca28e52ab128970dfd783766a58d42461'; // Replace with your secret key
 
-// Initialize Swagger documentation
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Route to handle the root URL (GET /)
+app.get('/', (req, res) => {
+  res.send('Welcome to the Paystack payment initialization API');
+});
 
-/**
- * @swagger
- * /paystack/transaction/initialize:
- *   post:
- *     summary: Initializes a payment transaction with Paystack
- *     description: Sends a payment initialization request to Paystack and returns a reference ID.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               amount:
- *                 type: integer
- *                 description: Amount in kobo (100 kobo = 1 Naira)
- *     responses:
- *       200:
- *         description: Payment initialized successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 reference:
- *                   type: string
- *                   description: The reference ID for the payment
- *       500:
- *         description: Error initializing the payment
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   description: The error message
- */
-
-// Route to initialize Paystack payment
 app.post('/paystack/transaction/initialize', async (req, res) => {
   const { email, amount } = req.body;
 
@@ -95,8 +41,6 @@ app.post('/paystack/transaction/initialize', async (req, res) => {
   }
 });
 
-// Start the Express server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
 });
