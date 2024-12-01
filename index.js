@@ -49,6 +49,8 @@ app.get('/', (req, res) => {
  *   post:
  *     summary: Initialize a Paystack payment transaction
  *     description: This endpoint initializes a payment transaction with Paystack. It returns a payment reference to complete the payment.
+ *     consumes:
+ *       - application/json
  *     parameters:
  *       - in: body
  *         name: paymentDetails
