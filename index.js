@@ -21,8 +21,8 @@ const PAYSTACK_SECRET_KEY = 'sk_live_9c93d96ca28e52ab128970dfd783766a58d42461'; 
 const swaggerOptions = {
   swaggerDefinition: {
     info: {
-      title: 'Paystack Payment Initialization API',
-      description: 'API to initialize payment transactions with Paystack',
+      title: 'Paystack Payment API',
+      description: 'API to manage Paystack payments and subaccounts',
       version: '1.0.0',
     },
     host: 'localhost:5000',
@@ -40,7 +40,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Route to handle the root URL (GET /)
 app.get('/', (req, res) => {
-  res.send('Welcome to the Paystack payment initialization API');
+  res.send('Welcome to the Paystack payment API');
 });
 
 /**
@@ -48,13 +48,13 @@ app.get('/', (req, res) => {
  * /paystack/transaction/initialize:
  *   post:
  *     summary: Initialize a Paystack payment transaction
- *     description: This endpoint initializes a payment transaction with Paystack. It returns an access_code to complete the payment.
+ *     description: Initializes a payment transaction with Paystack and includes split payment configuration.
  *     consumes:
  *       - application/json
  *     parameters:
  *       - in: body
  *         name: paymentDetails
- *         description: The payment details (email and amount).
+ *         description: The payment details (email, amount, subaccount, split configuration).
  *         required: true
  *         schema:
  *           type: object
@@ -65,6 +65,26 @@ app.get('/', (req, res) => {
  *             amount:
  *               type: integer
  *               example: 5000
+ *             subaccount:
+ *               type: string
+ *               example: "ACCT_xxx"
+ *             split:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: "percentage"
+ *                 subaccounts:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       subaccount:
+ *                         type: string
+ *                         example: "ACCT_xxx"
+ *                       share:
+ *                         type: integer
+ *                         example: 50
  *     responses:
  *       200:
  *         description: Successfully initialized the payment transaction
@@ -84,7 +104,7 @@ app.get('/', (req, res) => {
  *               example: "Payment initialization failed"
  */
 app.post('/paystack/transaction/initialize', async (req, res) => {
-  const { email, amount } = req.body;
+  const { email, amount, subaccount, split } = req.body;
 
   const headers = {
     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
@@ -93,6 +113,8 @@ app.post('/paystack/transaction/initialize', async (req, res) => {
   const data = {
     email,
     amount,
+    subaccount,
+    split,
   };
 
   try {
@@ -100,8 +122,79 @@ app.post('/paystack/transaction/initialize', async (req, res) => {
     const { access_code } = response.data.data; // Get access_code from Paystack API response
     res.json({ access_code });
   } catch (error) {
-    console.error(error);
+    console.error(error.response?.data || error.message);
     res.status(500).json({ error: 'Payment initialization failed' });
+  }
+});
+
+/**
+ * @swagger
+ * /create-subaccount:
+ *   post:
+ *     summary: Create a Paystack subaccount
+ *     description: Creates a subaccount for payment splits.
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - in: body
+ *         name: subaccountDetails
+ *         description: The subaccount details (business name, settlement bank, account number, and percentage charge).
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             business_name:
+ *               type: string
+ *               example: "Oasis"
+ *             settlement_bank:
+ *               type: string
+ *               example: "058"
+ *             account_number:
+ *               type: string
+ *               example: "0123456047"
+ *             percentage_charge:
+ *               type: integer
+ *               example: 30
+ *     responses:
+ *       200:
+ *         description: Subaccount successfully created
+ *         schema:
+ *           type: object
+ *           properties:
+ *             subaccount_code:
+ *               type: string
+ *               example: "ACCT_xxx"
+ *       500:
+ *         description: Subaccount creation failed
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Subaccount creation failed"
+ */
+app.post('/create-subaccount', async (req, res) => {
+  const { business_name, settlement_bank, account_number, percentage_charge } = req.body;
+
+  const headers = {
+    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
+  const data = {
+    business_name,
+    settlement_bank,
+    account_number,
+    percentage_charge,
+  };
+
+  try {
+    const response = await axios.post('https://api.paystack.co/subaccount', data, { headers });
+    const { subaccount_code } = response.data.data; // Get subaccount code from Paystack API response
+    res.json({ subaccount_code });
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ error: 'Subaccount creation failed' });
   }
 });
 
