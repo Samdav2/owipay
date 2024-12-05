@@ -87,7 +87,7 @@ app.post('/paystack/transaction/initialize', async (req, res) => {
   const { email, amount, subaccount, split } = req.body;
 
   const headers = {
-    Authorization: Bearer ${PAYSTACK_SECRET_KEY},
+    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
   };
 
   const data = {
