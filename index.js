@@ -104,17 +104,21 @@ app.get('/', (req, res) => {
  *               example: "Payment initialization failed"
  */
 app.post('/paystack/transaction/initialize', async (req, res) => {
-  const { email, amount, subaccount, split } = req.body;
+  const { email, amount, subaccountCode } = req.body;
 
   const headers = {
     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
   };
 
+ const splitPayment = subaccountCode ? {
+    type: 'percentage', 
+    subaccounts: [{ subaccount: subaccountCode, share: 50 }] 
+  } : undefined;
+
   const data = {
     email,
-    amount,
-    subaccount,
-    split,
+    amount: amount * 100,  
+    split: splitPayment,
   };
 
   try {
