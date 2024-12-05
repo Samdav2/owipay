@@ -48,13 +48,13 @@ app.get('/', (req, res) => {
  * /paystack/transaction/initialize:
  *   post:
  *     summary: Initialize a Paystack payment transaction
- *     description: Initializes a payment transaction with Paystack and includes split payment configuration.
+ *     description: This endpoint initializes a payment transaction with Paystack. It returns an access_code to complete the payment.
  *     consumes:
  *       - application/json
  *     parameters:
  *       - in: body
  *         name: paymentDetails
- *         description: The payment details (email, amount, subaccount, split configuration).
+ *         description: The payment details (email and amount).
  *         required: true
  *         schema:
  *           type: object
@@ -65,26 +65,6 @@ app.get('/', (req, res) => {
  *             amount:
  *               type: integer
  *               example: 5000
- *             subaccount:
- *               type: string
- *               example: "ACCT_xxx"
- *             split:
- *               type: object
- *               properties:
- *                 type:
- *                   type: string
- *                   example: "percentage"
- *                 subaccounts:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       subaccount:
- *                         type: string
- *                         example: "ACCT_xxx"
- *                       share:
- *                         type: integer
- *                         example: 50
  *     responses:
  *       200:
  *         description: Successfully initialized the payment transaction
@@ -104,21 +84,17 @@ app.get('/', (req, res) => {
  *               example: "Payment initialization failed"
  */
 app.post('/paystack/transaction/initialize', async (req, res) => {
-  const { email, amount, subaccountCode } = req.body;
+  const { email, amount, subaccount, split } = req.body;
 
   const headers = {
-    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+    Authorization: Bearer ${PAYSTACK_SECRET_KEY},
   };
-
- const splitPayment = subaccountCode ? {
-    type: 'percentage', 
-    subaccounts: [{ subaccount: subaccountCode, share: 50 }] 
-  } : undefined;
 
   const data = {
     email,
-    amount: amount * 100,  
-    split: splitPayment,
+    amount,
+    subaccount,
+    split,
   };
 
   try {
@@ -197,7 +173,7 @@ app.post('/create-subaccount', async (req, res) => {
     const { subaccount_code } = response.data.data; // Get subaccount code from Paystack API response
     res.json({ subaccount_code });
   } catch (error) {
-    console.error(error.response?.data || error.message);
+    console.error(error);
     res.status(500).json({ error: 'Subaccount creation failed' });
   }
 });
