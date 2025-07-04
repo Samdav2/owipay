@@ -15,7 +15,7 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
-const PAYSTACK_SECRET_KEY = 'sk_live_9c93d96ca28e52ab128970dfd783766a58d42461'; // Replace with your secret key
+const PAYSTACK_SECRET_KEY = 'sk_live_3dae1ef6b543efb1ac07723c4db49b3c3e873185'; // Replace with your secret key
 
 // Swagger definition
 const swaggerOptions = {
